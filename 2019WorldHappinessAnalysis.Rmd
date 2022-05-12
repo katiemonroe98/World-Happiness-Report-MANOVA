@@ -1,0 +1,228 @@
+---
+title: "2019 World Happiness Report"
+author: "Katie Monroe"
+date: "5/8/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(countrycode)
+library(gtsummary)
+library(dplyr)
+library(corrplot)
+library(reshape2)
+library(ggplot2)
+library(olsrr)
+library(htmlTable)
+library(kableExtra)
+library(magick)
+```
+
+```{r}
+
+#load in data
+data <- read.csv("2019HR.csv", sep = ",", header = TRUE)
+
+#change country to continent and remove country
+data$Continent <- countrycode(sourcevar = data[, "Country.or.region"],
+                            origin = "country.name",
+                            destination = "continent")
+
+data<- na.omit(data)
+data$Continent <- as.factor(data$Continent)
+
+
+data$Country.or.region <- NULL
+data$Overall.rank <- NULL
+
+#data summary table in r
+table1 <- tbl_summary(data)
+nrow(data)
+
+table1 %>%
+ save_kable(file = "t1.png")
+
+gt::gtsave(as_gt(table1), file = file.path(tempdir(), "temp.png"))
+```
+
+
+Visual Analysis 
+
+```{r}
+
+#corr plot
+data
+M <- cor(data[,1:7], method = "pearson")
+
+corrplot(M, method="color", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45,
+         diag=T,
+         col = colorRampPalette(c("#0E7C7B", "white", "#233474"))(200)
+         )
+
+#boxplots by each country
+datamelt <- melt(data[,2:8])
+
+p1 <- ggplot(data, aes(x= Continent, y = Score, fill = Continent))+
+  geom_boxplot()+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())
+
+p2 <- ggplot(data, aes(x= Continent, y = GDP.per.capita, fill = Continent))+
+  geom_boxplot()+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  ylab("GDP Per Cap.")
+
+p3 <- ggplot(data, aes(x= Continent, y = Social.support, fill = Continent))+
+  geom_boxplot()+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  ylab("Social Support")
+
+p4 <- ggplot(data, aes(x= Continent, y = Healthy.life.expectancy, fill = Continent))+
+  geom_boxplot()+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  ylab("Healthy Life Ex.")
+
+p5 <- ggplot(data, aes(x= Continent, y = Freedom.to.make.life.choices, fill = Continent))+
+  geom_boxplot()+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  ylab("Freedom Choices")
+
+p6 <- ggplot(data, aes(x= Continent, y = Generosity, fill = Continent))+
+  geom_boxplot()+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())
+
+p7 <- ggplot(data, aes(x= Continent, y = Perceptions.of.corruption, fill = Continent))+
+  geom_boxplot()+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  ylab("Corruption Perc.")
+
+
+ggarrange(p1, p2, p3, p4, common.legend = TRUE, ncol = 4)
+ggarrange(p5, p6, p7, common.legend = TRUE, ncol = 3)
+
+#scatterplots by country
+
+s1 <- ggplot(data, aes(x= GDP.per.capita, y = Score, color = Continent, fill = Continent))+
+  geom_line()+
+  geom_point(shape=21, size=4, color = "black")+
+  scale_color_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  xlab("GDP Per Cap.")
+
+s2 <- ggplot(data, aes(x= Social.support, y = Score, color = Continent, fill = Continent))+
+  geom_line()+
+  geom_point(shape=21, size=4, color = "black")+
+  scale_color_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  xlab("Social Support")
+
+s3 <- ggplot(data, aes(x= Healthy.life.expectancy, y = Score, color = Continent, fill = Continent))+
+  geom_line()+
+  geom_point(shape=21, size=4, color = "black")+
+  scale_color_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  xlab("Healthy Life Ex.")
+
+s4 <- ggplot(data, aes(x= Freedom.to.make.life.choices, y = Score, color = Continent, fill = Continent))+
+  geom_line()+
+  geom_point(shape=21, size=4, color = "black")+
+  scale_color_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  xlab("Freedom Choices")
+
+s5 <- ggplot(data, aes(x=Generosity, y = Score, color = Continent, fill = Continent))+
+  geom_line()+
+  geom_point(shape=21, size=4, color = "black")+
+  scale_color_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()
+
+s6 <- ggplot(data, aes(x= Perceptions.of.corruption, y = Score, color = Continent, fill = Continent))+
+  geom_line()+
+  geom_point(shape=21, size=4, color = "black")+
+  scale_color_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  scale_fill_manual(values=c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"))+
+  theme_bw()+
+  xlab("Corruption Perc.")
+
+ggarrange(s1, s2, s3, common.legend = TRUE, ncol = 3)
+ggarrange(s4, s5, s6, common.legend = TRUE, ncol = 3)
+
+
+#pairs plot
+
+pairs(data[,2:7], col = c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB")[as.factor(data$Continent)],oma=c(2,2,2,13))
+par(xpd = TRUE)
+legend("right", fill = c("#233474","#CAA8F5", "#EF731A", "#0E7C7B", "#17BEBB"), legend = c( levels(data$Continent)), cex = 0.75)
+
+
+```
+
+
+```{r}
+
+#remove Oceania
+data <- subset(data, data$Continent != "Oceania")
+
+dataq <- sqrt(data[1:7])
+dataq$Continent <- data$Continent
+
+#check QQ plots
+ggqqplot(dataq, "Score", facet.by = "Continent",
+         ylab = "Score", ggtheme = theme_bw())
+
+ggqqplot(data, "Score", facet.by = "Continent",
+         ylab = "Score", ggtheme = theme_bw())
+
+
+#Levene test
+leveneTest(data$Score, data$Continent)
+
+#Manova
+mod <- manova(cbind(Score, GDP.per.capita,Social.support,Healthy.life.expectancy,
+                    Freedom.to.make.life.choices,Generosity,Perceptions.of.corruption) ~ Continent, data = data)
+
+summary(mod)
+
+#One way anova post-hoc test
+sam <- summary.aov(mod)
+
+kable(sam$` Response Score`, digits =200, caption = "Score")
+kable(sam$` Response GDP.per.capita`, digits =200, caption = "GDP per capita")
+kable(sam$` Response Social.support`, digits =200, caption = "Social support")
+kable(sam$` Response Healthy.life.expectancy`, digits =200, caption = "Healthy life expectancy")
+kable(sam$` Response Freedom.to.make.life.choices`, digits =200, caption = "Freedom to make life choices")
+kable(sam$` Response Generosity`, digits =200, caption = "Generosity")
+kable(sam$` Response Perceptions.of.corruption`, digits =200, caption = "Perceptions of corruptions")
+
+#calculate effect size
+library(effectsize)
+effectsize::eta_squared(mod)
+```
